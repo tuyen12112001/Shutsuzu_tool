@@ -13,33 +13,21 @@ def blink_widget(widget, times=3, color="#ffcccc", interval=200):
             widget.config(bg=original_color)
     toggle(times * 2)
 
+def clear_error_box(app):
+    """Xóa toàn bộ nội dung trong error_box"""
+    def _clear():
+        app.error_box.config(state=tk.NORMAL)
+        app.error_box.delete("1.0", "end")
+        app.error_box.config(state=tk.DISABLED)
+    
+    app.after(0, _clear)
+
 def update_error_box(app, message, status="error", exclusive_pairs=(("warning", "info"),)):
     """
-    Cập nhật error_box theo 'status' và đảm bảo mỗi loại chỉ giữ 1 thông điệp.
-    Nếu status thuộc cặp loại trừ, xóa tag của đối nghịch (vd: warning xoá info).
+    Cập nhật error_box - chỉ thêm thông báo mới, không xóa cũ
     """
     def _update():
         app.error_box.config(state=tk.NORMAL)
-
-        # Xóa đoạn mang cùng tag 'status'
-        ranges = app.error_box.tag_ranges(status)
-        for i in range(0, len(ranges), 2):
-            app.error_box.delete(ranges[i], ranges[i+1])
-
-        # Xóa tag đối nghịch nếu nằm trong cặp loại trừ
-        opposite = None
-        for a, b in exclusive_pairs:
-            if status == a:
-                opposite = b
-                break
-            if status == b:
-                opposite = a
-                break
-
-        if opposite:
-            opp_ranges = app.error_box.tag_ranges(opposite)
-            for i in range(0, len(opp_ranges), 2):
-                app.error_box.delete(opp_ranges[i], opp_ranges[i+1])
 
         # Icon theo trạng thái
         icons = {"error": "❌", "success": "✅", "info": "ℹ️", "warning": "⚠️"}
@@ -54,6 +42,48 @@ def update_error_box(app, message, status="error", exclusive_pairs=(("warning", 
             blink_widget(app.error_box, color="#ffcccc")
         elif status == "success":
             blink_widget(app.error_box, color="#ccffcc")
+
+        # Khóa lại & cuộn xuống
+        app.error_box.config(state=tk.DISABLED)
+        app.error_box.see("end")
+
+    app.after(0, _update)
+
+def update_file_comparison_message(app, message, status="error"):
+    """
+    Quản lý thông báo so sánh file XDW và ICD
+    Chỉ giữ 1 thông báo loại này - xóa cái cũ nếu có thêm cái mới
+    
+    Args:
+        app: ShutsuzuuApp instance
+        message: Nội dung thông báo
+        status: "warning" (ファイル数が一致しません), hoặc "info" (処理が完了)
+    """
+    def _update():
+        app.error_box.config(state=tk.NORMAL)
+
+        # Xóa tất cả thông báo so sánh file cũ
+        for tag in ["error", "success", "warning", "info"]:
+            ranges = app.error_box.tag_ranges(tag)
+            for i in range(0, len(ranges), 2):
+                content = app.error_box.get(ranges[i], ranges[i+1])
+                # Chỉ xóa nếu là thông báo so sánh file (chứa keyword)
+                if "xdwファイル数" in content or "処理が完了しました" in content:
+                    app.error_box.delete(ranges[i], ranges[i+1])
+
+        # Icon theo trạng thái
+        icons = {"error": "❌", "success": "✅", "warning": "⚠️", "info": "ℹ️"}
+        icon = icons.get(status, "•")
+        text = f"{icon} {message}\n"
+
+        # Chèn thông báo mới
+        app.error_box.insert("end", text, status)
+
+        # Hiệu ứng nhấp nháy
+        if status == "warning":
+            blink_widget(app.error_box, color="#ffcccc")
+        elif status == "info":
+            blink_widget(app.error_box, color="#ccffff")
 
         # Khóa lại & cuộn xuống
         app.error_box.config(state=tk.DISABLED)

@@ -6,7 +6,8 @@ from tkinter import messagebox
 
 from utils.UI_helpers import (
     animate_loading, stop_loading, update_status,
-    log_error, log_info, log_success, log_warning,
+    log_error, log_info, log_success, log_warning, clear_error_box,
+    update_file_comparison_message,
 )
 from config.settings import STATUS_ERROR_COLOR, STATUS_WARN_COLOR
 
@@ -17,7 +18,7 @@ from .xdw_collection import step3_collect_xdw
 from .clear import step4_cleanup
 from utils.excel_collect import add_ls_lk_excel_set_to_output
 from utils.excel_remove import excel_remove
-from utils.emergency_stop import emergency_manager
+from utils.emergency_stop import emergency_manager, cleanup_on_stop
 
 
 class ProcessManager:
@@ -31,12 +32,17 @@ class ProcessManager:
         self.app.progress["value"] = 0
         log_error(self.app, "ユーザーによって非常停止が実行されました。")
         self.app.print_done_btn.config(state="disabled")
-        messagebox.showwarning("警告", "処理を強制停止しました。安全に終了してください。")
+        
+        # 作成されたフォルダをクリーンアップ
+        cleanup_on_stop(self.app, self.app.info)
+        
+        messagebox.showwarning("警告", "処理を強制停止しました。")
 
     # Sự kiện: 開始
     def start_process(self):
         emergency_manager.reset()
         self.app.print_done_btn.config(state="disabled")
+        clear_error_box(self.app)  # Xóa tất cả error message cũ
 
         excel_path = os.path.normpath(self.app.excel_full_path.strip()) if getattr(self.app, "excel_full_path", "") else ""
         if not excel_path or not os.path.isfile(excel_path):
@@ -168,14 +174,14 @@ class ProcessManager:
                         "DocuWorksのファイルを確認してください。"
                     )
                     messagebox.showwarning("注意", warning_msg)
-                    log_warning(self.app, f"ファイル数が一致しません。ICD: {self.app.info['copied_count']} 件 / XDW: {moved_count} 件")
+                    update_file_comparison_message(self.app, warning_msg, status="warning")
                 else:
                     success_msg = (
                         f"処理が完了しました。\n移動した.xdwファイル数: {moved_count} 件\n"
                         "印刷処理が正常に完了しました。"
                     )
                     messagebox.showinfo("情報", success_msg)
-                    log_info(self.app, f"印刷処理が正常に完了しました。移動した.xdwファイル数: {moved_count} 件")
+                    update_file_comparison_message(self.app, success_msg, status="info")
 
             except Exception as e:
                 log_error(self.app, f"クリーンアップに失敗しました: {str(e)}")
