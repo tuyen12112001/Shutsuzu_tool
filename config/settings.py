@@ -37,7 +37,7 @@ STATUS_SUCCESS_COLOR = "green"
 STATUS_ERROR_COLOR = "red"
 
 # UI text
-APP_TITLE = "出図ツール ver 2.0"
+APP_TITLE = "出図ツール ver 2.1"
 HEADER_TEXT = "出図ツール"
 
 # Progress bar default length
