@@ -66,14 +66,14 @@ def cleanup_xdw_on_user_request(app, output_folder):
         if success:
             # 成功メッセージ
             result_msg = (
-                f"✅ {deleted_count} 個のXDWファイルを削除しました。\n"
+                f" {deleted_count} 個のXDWファイルを削除しました。\n"
                 "DocuWorksのファイルを確認してからお試しください。"
             )
             log_success(app, result_msg)
         else:
             # 失敗メッセージ
             result_msg = (
-                f"⚠️ XDWファイル削除に失敗しました:\n{message}\n"
+                f" XDWファイル削除に失敗しました:\n{message}\n"
                 "ファイルを手動で削除してください。"
             )
             log_warning(app, result_msg)

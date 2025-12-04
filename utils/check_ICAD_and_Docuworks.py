@@ -26,7 +26,7 @@ def ensure_docuworks_running():
     Kiểm tra DocuWorks có chạy không, nếu chưa thì mở từ shortcut.
     Sau đó thử active cửa sổ.
     """
-    windows = [w for w in gw.getWindowsWithTitle('DocuWorks Desk') if w.title.startswith('DocuWorks')]
+    windows = [w for w in gw.getWindowsWithTitle('DocuWorks') if w.title.startswith('DocuWorks')]
     if not windows:
         shortcut = find_shortcut("DocuWorks")
         if shortcut:
@@ -37,7 +37,7 @@ def ensure_docuworks_running():
             print("❌ Không tìm thấy shortcut DocuWorks trong Start Menu.")
             return False
 
-    windows = [w for w in gw.getWindowsWithTitle('DocuWorks Desk') if w.title.startswith('DocuWorks')]
+    windows = [w for w in gw.getWindowsWithTitle('DocuWorks') if w.title.startswith('DocuWorks')]
     if windows:
         win = windows[0]
         win.restore()  # Khôi phục nếu bị thu nhỏ
