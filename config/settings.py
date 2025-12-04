@@ -5,19 +5,17 @@ import sys
 
 def _get_base_dir():
     """
-    Trả về thư mục gốc của project:
-    - Khi chạy bình thường: thư mục chứa main.py
-    - Khi chạy PyInstaller: thư mục tạm MEIPASS
+    プロジェクトのルートディレクトリを返します。
+    - 通常実行時: main.py があるディレクトリ
+    - PyInstaller 実行時: 一時ディレクトリ MEIPASS
     """
     if getattr(sys, 'frozen', False):  # PyInstaller
         return sys._MEIPASS
-    # Khi chạy từ source, base là thư mục chứa main.py
-    # settings.py nằm trong config/, nên lấy 2 cấp lên
+    # settings.py は config/ にあるので、2 階層上に移動します。
     return os.path.dirname(os.path.dirname(__file__))
 
 BASE_DIR = _get_base_dir()
-
-# Thư mục assets cùng cấp với app/process/utils/config/icon
+# アセットフォルダはapp/process/utils/config/iconと同じレベルにあります
 ASSETS_DIR = os.path.join(BASE_DIR, "assets")
 ICON_DIR   = os.path.join(BASE_DIR, "icon")
 
@@ -28,7 +26,7 @@ IMAGE2_PATH = os.path.join(ASSETS_DIR, "2.png")
 
 
 
-# Màu sắc chủ đạo
+# メインカラー
 BG_COLOR = "#e6f2ff"
 PANEL_BG = "#f9f9f9"
 STATUS_INFO_COLOR = "blue"
