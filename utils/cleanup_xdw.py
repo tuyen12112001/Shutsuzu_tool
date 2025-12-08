@@ -1,6 +1,9 @@
 # process/cleanup_xdw.py
 import os
+import time
+import pyautogui
 from process.clear import force_delete
+
 
 def delete_all_xdw_files(output_folder):
     """
@@ -29,6 +32,14 @@ def delete_all_xdw_files(output_folder):
             else:
                 errors.append(f"{xdw_file} (強制削除失敗)")
         
+        # ✅ Refresh Explorer sau khi xóa
+        try:
+            pyautogui.hotkey("f5")
+            time.sleep(1)
+            print("🔄 Explorer refreshed after XDW deletion.")
+        except Exception:
+            pass
+
         if errors:
             error_msg = f"{deleted_count} 件削除しましたが、{len(errors)} 件削除できません:\n" + "\n".join(errors)
             print(f"[警告] {error_msg}")
@@ -72,7 +83,15 @@ def cleanup_xdw_on_user_request(app, output_folder):
                 "ファイルを手動で削除してください。"
             )
             log_warning(app, result_msg)
-            
+                
+        # ✅ Refresh Explorer sau khi xóa XDW
+            try:
+                pyautogui.hotkey("f5")
+                time.sleep(1)
+                print("🔄 Explorer refreshed after XDW deletion.")
+            except Exception:
+                pass
+    
     except Exception as e:
         log_error(app, f"XDWファイル削除処理に失敗: {str(e)}")
 

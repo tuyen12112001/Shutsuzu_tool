@@ -163,27 +163,26 @@ class ProcessManager:
             self.app.status_label.config(text="処理は非常停止で中断されました。", fg=STATUS_ERROR_COLOR)
             return
 
+        # Bước 3: Thu thập .xdw
         update_status(self.app, "ステップ3: .xdwファイルを取得中...", 85)
-        moved_count = step3_collect_xdw(self.app.info["output_folder"], self.app.info["docuworks_folder"])
+
+        # ✅ Gọi step3_collect_xdw với icd_list để so sánh trước khi rename
+        moved_count, missing, extra = step3_collect_xdw(
+            self.app.info["output_folder"],
+            self.app.info["docuworks_folder"],
+            self.app.info.get("icd_list", [])
+        )
 
         if moved_count > 0:
             update_status(self.app, f".xdwファイル {moved_count} 件を移動しました。", 95)
-            update_status(self.app, "ステップ4: クリーンアップ中...", 98)
-            try:
-                # So sánh số lượng ICD và XDW
 
-                step4_cleanup(self.app.info["output_folder"])
-                update_status(self.app, "完了！すべての処理が終了しました。", 100, color="green")
-                
-                missing, extra = compare_icd_xdw(self.app.info["output_folder"], self.app.info.get("icd_list", []))
-                self._open_folder_safe(self.app.info["output_folder"])
-
-                if moved_count != self.app.info['copied_count'] or extra:
-                    warning_msg = (
-                        f"処理が完了しましたが、ファイル数が一致しません。\n"
-                        f"ICDファイル数: {self.app.info['copied_count']} 件\n"
-                        f".xdwファイル数: {moved_count} 件\n"
-                    )  
+            # ✅ Hiển thị cảnh báo nếu thiếu hoặc thừa file
+            if missing or extra:
+                warning_msg = (
+                    f"処理が完了しましたが、ファイル数が一致しません。\n"
+                    f"ICDファイル数: {len(self.app.info.get('icd_list', []))} 件\n"
+                    f".xdwファイル数: {moved_count} 件\n"
+                )
                 if missing:
                     warning_msg += f"\n不足ファイル({len(missing)}):\n" + "\n".join(missing[:10])
                     if len(missing) > 10:
@@ -192,27 +191,34 @@ class ProcessManager:
                     warning_msg += f"\n余分ファイル({len(extra)}):\n" + "\n".join(extra[:10])
                     if len(extra) > 10:
                         warning_msg += "\n... (残り省略)"
-                    messagebox.showwarning("注意", warning_msg)
-                    update_file_comparison_message(self.app, warning_msg, status="warning")
 
-                    def on_yes():
-                        cleanup_xdw_on_user_request(self.app, self.app.info["output_folder"])
+                messagebox.showwarning("注意", warning_msg)
+                update_file_comparison_message(self.app, warning_msg, status="warning")
 
-                    def on_no():
-                        show_no_delete_xdw_message(self.app)
+                # ✅ Thêm nút cho phép xóa XDW nếu người dùng muốn
+                def on_yes():
+                    cleanup_xdw_on_user_request(self.app, self.app.info["output_folder"])
 
-                    add_delete_xdw_buttons(self.app, on_yes, on_no)
-                else:
-                    success_msg = (
-                        f"処理が完了しました。\n移動した.xdwファイル数: {moved_count} 件\n"
-                        "印刷処理が正常に完了しました。"
-                    )
-                    messagebox.showinfo("情報", success_msg)
-                    update_file_comparison_message(self.app, success_msg, status="info")
+                def on_no():
+                    show_no_delete_xdw_message(self.app)
 
+                add_delete_xdw_buttons(self.app, on_yes, on_no)
+            else:
+                success_msg = (
+                    f"処理が完了しました。\n移動した.xdwファイル数: {moved_count} 件\n"
+                    "印刷処理が正常に完了しました。"
+                )
+                messagebox.showinfo("情報", success_msg)
+                update_file_comparison_message(self.app, success_msg, status="info")
 
+            # Bước 4: Cleanup sau khi so sánh
+            update_status(self.app, "ステップ4: クリーンアップ中...", 98)
+            try:
+                step4_cleanup(self.app.info["output_folder"])
+                update_status(self.app, "完了！すべての処理が終了しました。", 100, color="green")
+                self._open_folder_safe(self.app.info["output_folder"])
             except Exception as e:
                 log_error(self.app, f"クリーンアップに失敗しました: {str(e)}")
+
         else:
             log_error(self.app, ".xdwファイルの取得に失敗しました。")
-

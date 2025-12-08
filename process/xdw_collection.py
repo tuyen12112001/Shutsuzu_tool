@@ -5,6 +5,8 @@ import pygetwindow as gw
 import pyperclip
 import difflib
 from utils.check_ICAD_and_Docuworks import ensure_docuworks_running
+from utils.rename import remove_suffix_3d_in_names
+from utils.file_compare import compare_icd_xdw
 
 def delete_folder_in_docuworks(docuworks_folder):
     folder_name = os.path.basename(docuworks_folder)
@@ -69,7 +71,7 @@ def delete_folder_in_docuworks(docuworks_folder):
     return False
 
 
-def step3_collect_xdw(output_dir, docuworks_folder):
+def step3_collect_xdw(output_dir, docuworks_folder,icd_list):
     """
     ステップ3:
     - Kích hoạt DocuWorks.
@@ -104,13 +106,29 @@ def step3_collect_xdw(output_dir, docuworks_folder):
         time.sleep(2)
         print("✅ Đã dán tất cả file vào thư mục đích.")
 
-        
         # Đếm số file .xdw trong output_dir
         xdw_files = [f for f in os.listdir(output_dir) if f.lower().endswith(".xdw")]
         copied_count = len(xdw_files)
         print(f"✅ Tổng số file .xdw đã copy: {copied_count}")
+        
+        # ✅ So sánh trước khi rename
+        missing, extra = compare_icd_xdw(output_dir, icd_list)
 
-        return copied_count
+        try:
+            rename_logs = remove_suffix_3d_in_names(
+                target_dir=output_dir,
+                target_exts=(".xdw",),
+                conflict_strategy="skip"
+            )
+
+            changed = sum(1 for k, v in rename_logs.items() if v)
+            print(f"🪄 '-3D' 除去によりリネームした .xdw 数: {changed}")
+        except Exception as e:
+            print(f"❌ '-3D' 除去リネーム中にエラー: {e}")
+
+                
+
+        return copied_count, missing, extra
     except Exception as e:
         print(f"❌ Lỗi khi thực hiện Step 3: {e}")
         return 0
