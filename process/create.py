@@ -83,7 +83,8 @@ def step1_create_and_copy(excel_path):
             "output_folder": target_folder,
             "excel_name_clean": excel_name_clean,
             "copied_count": len(copied_files),
-            "not_found": not_found
+            "not_found": not_found,
+            "icd_list": copied_files
         }
 
     except Exception as e:

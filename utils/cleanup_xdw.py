@@ -1,11 +1,10 @@
 # process/cleanup_xdw.py
 import os
-import shutil
-
+from process.clear import force_delete
 
 def delete_all_xdw_files(output_folder):
     """
-    削除 output_folder 内のすべての .xdw ファイル
+    削除 output_folder 内のすべての .xdw ファイル (強制削除)
     
     Args:
         output_folder: XDWファイルが格納されているフォルダパス
@@ -17,34 +16,30 @@ def delete_all_xdw_files(output_folder):
         if not os.path.exists(output_folder):
             return False, 0, f"フォルダが存在しません: {output_folder}"
         
-        # 検索して削除
         xdw_files = [f for f in os.listdir(output_folder) if f.lower().endswith(".xdw")]
         deleted_count = 0
         errors = []
         
         for xdw_file in xdw_files:
             file_path = os.path.join(output_folder, xdw_file)
-            try:
-                print(f"[削除開始] {xdw_file}")
-                os.remove(file_path)
+            print(f"[削除開始] {xdw_file}")
+            if force_delete(file_path):
                 deleted_count += 1
                 print(f"[削除完了] {xdw_file}")
-            except PermissionError:
-                errors.append(f"{xdw_file} (使用中)")
-            except Exception as e:
-                errors.append(f"{xdw_file} ({str(e)})")
+            else:
+                errors.append(f"{xdw_file} (強制削除失敗)")
         
         if errors:
             error_msg = f"{deleted_count} 件削除しましたが、{len(errors)} 件削除できません:\n" + "\n".join(errors)
             print(f"[警告] {error_msg}")
             return False, deleted_count, error_msg
         
-        success_msg = f"{deleted_count} 個のXDWファイルを削除しました。"
+        success_msg = f"{deleted_count} 個のXDWファイルを強制削除しました。"
         print(f"[成功] {success_msg}")
         return True, deleted_count, success_msg
         
     except Exception as e:
-        error_msg = f"XDWファイルの削除に失敗しました: {str(e)}"
+        error_msg = f"XDWファイルの強制削除に失敗しました: {str(e)}"
         print(f"[エラー] {error_msg}")
         return False, 0, error_msg
 

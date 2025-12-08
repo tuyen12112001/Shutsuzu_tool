@@ -181,3 +181,4 @@ def stop_loading(app):
 def update_status(app, text, progress, color="blue"):
     app.status_label.config(text=text, fg=color)
     app.progress["value"] = progress
+

@@ -19,6 +19,7 @@ from utils.cleanup_xdw import cleanup_xdw_on_user_request, show_no_delete_xdw_me
 from utils.excel_collect import add_ls_lk_excel_set_to_output
 from utils.excel_remove import excel_remove
 from utils.emergency_stop import emergency_manager, cleanup_on_stop
+from utils.file_compare import compare_icd_xdw
 
 
 class ProcessManager:
@@ -58,6 +59,19 @@ class ProcessManager:
         self.app.progress["value"] = 0
 
         threading.Thread(target=self._run_steps, args=(excel_path,), daemon=True).start()
+
+    
+    def _open_folder_safe(self, path):
+        """
+        Mở thư mục kết quả một cách an toàn, tương thích Windows, macOS, Linux.
+        """
+        import sys
+        import subprocess
+        try:
+            if sys.platform.startswith("win"):
+                os.startfile(path)
+        except Exception:
+            pass
 
     def _run_steps(self, excel_path):
         try:
@@ -156,33 +170,37 @@ class ProcessManager:
             update_status(self.app, f".xdwファイル {moved_count} 件を移動しました。", 95)
             update_status(self.app, "ステップ4: クリーンアップ中...", 98)
             try:
+                # So sánh số lượng ICD và XDW
+
                 step4_cleanup(self.app.info["output_folder"])
                 update_status(self.app, "完了！すべての処理が終了しました。", 100, color="green")
+                
+                missing, extra = compare_icd_xdw(self.app.info["output_folder"], self.app.info.get("icd_list", []))
+                self._open_folder_safe(self.app.info["output_folder"])
 
-                # Mở thư mục kết quả (Windows)
-                try:
-                    os.startfile(self.app.info["output_folder"])
-                except Exception:
-                    pass
-
-                # Kiểm tra số lượng
-                if moved_count != self.app.info['copied_count']:
+                if moved_count != self.app.info['copied_count'] or extra:
                     warning_msg = (
                         f"処理が完了しましたが、ファイル数が一致しません。\n"
                         f"ICDファイル数: {self.app.info['copied_count']} 件\n"
                         f".xdwファイル数: {moved_count} 件\n"
-                        "DocuWorksのファイルを確認してください。"
-                    )
+                    )  
+                if missing:
+                    warning_msg += f"\n不足ファイル({len(missing)}):\n" + "\n".join(missing[:10])
+                    if len(missing) > 10:
+                        warning_msg += "\n... (残り省略)"
+                if extra:
+                    warning_msg += f"\n余分ファイル({len(extra)}):\n" + "\n".join(extra[:10])
+                    if len(extra) > 10:
+                        warning_msg += "\n... (残り省略)"
                     messagebox.showwarning("注意", warning_msg)
                     update_file_comparison_message(self.app, warning_msg, status="warning")
-                    
-                    # Thêm 2 button Yes/No để user chọn xóa file XDW
+
                     def on_yes():
                         cleanup_xdw_on_user_request(self.app, self.app.info["output_folder"])
-                    
+
                     def on_no():
                         show_no_delete_xdw_message(self.app)
-                    
+
                     add_delete_xdw_buttons(self.app, on_yes, on_no)
                 else:
                     success_msg = (
@@ -191,6 +209,7 @@ class ProcessManager:
                     )
                     messagebox.showinfo("情報", success_msg)
                     update_file_comparison_message(self.app, success_msg, status="info")
+
 
             except Exception as e:
                 log_error(self.app, f"クリーンアップに失敗しました: {str(e)}")
