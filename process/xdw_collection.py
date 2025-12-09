@@ -7,6 +7,7 @@ import difflib
 from utils.check_ICAD_and_Docuworks import ensure_docuworks_running
 from utils.rename import remove_suffix_3d_in_names
 from utils.file_compare import compare_icd_xdw
+from utils.refresh_explore import refresh_explorer
 
 def delete_folder_in_docuworks(docuworks_folder):
     folder_name = os.path.basename(docuworks_folder)
@@ -123,10 +124,11 @@ def step3_collect_xdw(output_dir, docuworks_folder,icd_list):
 
             changed = sum(1 for k, v in rename_logs.items() if v)
             print(f"🪄 '-3D' 除去によりリネームした .xdw 数: {changed}")
+            refresh_explorer(output_dir)
         except Exception as e:
             print(f"❌ '-3D' 除去リネーム中にエラー: {e}")
-
-                
+            refresh_explorer(output_dir)
+            pass
 
         return copied_count, missing, extra
     except Exception as e:

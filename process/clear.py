@@ -4,6 +4,7 @@ import shutil
 import pyautogui
 import time
 import subprocess
+from utils.refresh_explore import refresh_explorer
 
 def force_delete(file_path):
     """
@@ -28,7 +29,7 @@ def step4_cleanup(folder_path):
         keep_exts = {'.xdw', '.xls', '.xlsx', '.xlsm'}
         deleted_files = []
 
-        # 1. Xóa file không thuộc keep_exts
+        # 1. Xóa file không thuộc keep_exits
         for root, dirs, files in os.walk(folder_path):
             if "xdw file" in root:
                 continue
@@ -51,12 +52,13 @@ def step4_cleanup(folder_path):
                         except Exception as e:
                             print(f"⚠ 空フォルダ削除失敗: {dir_path} | エラー: {e}")
 
+        
         # 3. Refresh Explorer
         try:
-            pyautogui.hotkey("f5")
-            time.sleep(1)
-        except Exception:
-            pass
+            refresh_explorer(folder_path)
+        except Exception as e:
+            print(f"⚠ エクスプローラーの更新中にエラーが発生しました: {e}")
+
 
         # 4. Kết quả
         if deleted_files:

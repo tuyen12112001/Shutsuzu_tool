@@ -3,6 +3,7 @@ import os
 import time
 import pyautogui
 from process.clear import force_delete
+from utils.refresh_explore import refresh_explorer
 
 
 def delete_all_xdw_files(output_folder):
@@ -34,10 +35,10 @@ def delete_all_xdw_files(output_folder):
         
         # ✅ Refresh Explorer sau khi xóa
         try:
-            pyautogui.hotkey("f5")
-            time.sleep(1)
-            print("🔄 Explorer refreshed after XDW deletion.")
+            refresh_explorer(output_folder)
+            print("🔄 Explorer refreshed sau khi xóa XDW.")
         except Exception:
+            print(f"⚠ Lỗi khi refresh Explorer: {e}")
             pass
 
         if errors:
@@ -84,13 +85,14 @@ def cleanup_xdw_on_user_request(app, output_folder):
             )
             log_warning(app, result_msg)
                 
-        # ✅ Refresh Explorer sau khi xóa XDW
-            try:
-                pyautogui.hotkey("f5")
-                time.sleep(1)
-                print("🔄 Explorer refreshed after XDW deletion.")
-            except Exception:
-                pass
+        
+# ✅ Refresh Explorer sau khi xóa XDW
+        try:
+            refresh_explorer(output_folder)
+            print("🔄 Explorer refreshed sau khi xóa XDW.")
+        except Exception as e:
+            print(f"⚠ Lỗi khi refresh Explorer: {e}")
+            pass
     
     except Exception as e:
         log_error(app, f"XDWファイル削除処理に失敗: {str(e)}")
