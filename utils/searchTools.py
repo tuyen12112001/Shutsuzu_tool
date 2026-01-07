@@ -15,14 +15,25 @@ import subprocess
 def search_gradually(base_path, workpiece):
     max_depth = 4
     found_file = None
-    black_keywords = ['.pdf', '-OLD', '.xls']
+    black_keywords = ['.pdf', '-OLD', '.xls','-old']
 
     for depth in range(1, max_depth + 1):
-        pattern = base_path + ('*\\' * depth) + f'*{workpiece}*'
+        pattern = base_path + ('*\\' * depth) + f'*{workpiece}*.icd'
         for f in glob.iglob(pattern, recursive=True):
-            if not any(keyword in os.path.basename(f) for keyword in black_keywords):
-                found_file = f
-                break
+            if any(keyword in os.path.basename(f) for keyword in black_keywords):
+                continue
+            filename = os.path.splitext(os.path.basename(f))[0]
+            # 完全一致のファイル名を優先
+            if filename == workpiece:
+                return f
+            # workpieceで始まるファイル名のみ取得（接頭辞なし）
+            if filename.startswith(workpiece):
+                # (M)、-OLDなど不要な接尾辞を除外
+                suffix = filename[len(workpiece):]
+                # 接尾辞が-3D、-2Dなどのみ許可
+                if re.fullmatch(r'-\w+', suffix):
+                    if not found_file:
+                        found_file = f
         if found_file:
             break
     return found_file

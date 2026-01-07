@@ -2,8 +2,6 @@ import os
 import pyautogui
 import pyperclip
 import time
-import sys
-import pygetwindow as gw
 from pynput.keyboard import Key, Controller
 import mss
 import cv2

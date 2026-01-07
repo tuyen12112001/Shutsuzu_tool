@@ -1,8 +1,6 @@
 
 import os
 import shutil
-import pyautogui
-import time
 import subprocess
 from utils.refresh_explore import refresh_explorer
 
